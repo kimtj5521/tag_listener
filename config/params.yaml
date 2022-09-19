@@ -1,0 +1,13 @@
+# goal_pose_offset (unit: m)
+offset_x: 0.1
+offset_y: 0.5
+
+# frame_id
+camera_frame: camera_link
+tag_frame: tag_0        # default: tag_ + id number / ex) tag id:0 => tag_0
+# tag_frame: tag_0_changed
+map_frame: map
+
+# goal_pose_frame id setting
+fixed_frame_flag: true   # true : camera_frame / false : map_frame
+# fixed_frame_flag: false 

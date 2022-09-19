@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Load parameters -->
+    <rosparam command="load" file="$(find tag_listener)/config/params.yaml" />
+
+    <node pkg="tf" type="static_transform_publisher" name="tagTFchanger" args="0  0  0  1.57  1.57  0.0 tag_0 tag_0_changed 100" />
+
+    <!-- docking station tag tf listener -->
+    <node pkg="tag_listener" type="tag_listener" name="tag_listener" output="screen">
+    </node>
+
+</launch>
