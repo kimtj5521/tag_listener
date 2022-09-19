@@ -8,4 +8,5 @@ parameters:
 3. goal pose frame id setting
 
 +x: forward direction
+
 +y: left direction
