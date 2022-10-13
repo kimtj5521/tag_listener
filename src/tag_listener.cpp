@@ -124,6 +124,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "tag_listener");
 
     tagListener tag_listener;
+    // std::cout << "test" << std::endl;
 
     ros::Rate loop_rate(10);
     while(ros::ok())
