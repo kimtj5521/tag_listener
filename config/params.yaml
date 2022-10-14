@@ -3,8 +3,8 @@ offset_x: 0.1
 offset_y: 0.5
 
 # frame_id
-# camera_frame: camera_link
-camera_frame: base_link
+camera_frame: camera_link
+# camera_frame: base_link
 tag_frame: tag_0        # default: tag_ + id number / ex) tag id:0 => tag_0
 # tag_frame: tag_0_changed
 map_frame: base_link
@@ -12,3 +12,7 @@ map_frame: base_link
 # goal_pose_frame id setting
 fixed_frame_flag: true   # true : camera_frame / false : map_frame
 # fixed_frame_flag: false 
+
+# tag_detectioin topic
+tag_detect_info_topic_name: tag_detections
+rear_camera_tag_detect_info_topic_name: rear_/tag_detections
