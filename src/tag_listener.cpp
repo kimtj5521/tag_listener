@@ -4,6 +4,7 @@
 #include <std_msgs/Bool.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Pose.h>
+#include <geometry_msgs/TwistStamped.h>
 #include <string>
 #include <apriltag_ros/AprilTagDetection.h>
 #include <apriltag_ros/AprilTagDetectionArray.h>
@@ -52,6 +53,7 @@ private:
     ros::Publisher rear_small_tag_detecting_flag_pub;
     
     ros::Publisher mission_num_pub;
+    ros::Publisher docking_command_pub;
 
     ros::Subscriber tag_detect_info_sub;
     ros::Subscriber rear_camera_tag_detect_info_sub;
@@ -82,6 +84,8 @@ private:
 
     double small_tag_distance;
     int mission_count;
+
+    geometry_msgs::TwistStamped  m_TagCommandMsg;
 };
 
 tagListener::tagListener()
@@ -116,6 +120,7 @@ tagListener::tagListener()
     rear_small_tag_detecting_flag_pub = nh.advertise<std_msgs::Bool>("/Docking/rear_small_tag_detecting_flag",1);
 
     mission_num_pub = nh.advertise<std_msgs::Int32>("/Docking/mission_num",1);
+    docking_command_pub = nh.advertise<geometry_msgs::TwistStamped>("/Docking/command",1);
 
     tag_detect_info_sub = nh.subscribe(m_tag_detect_info_topic_name, 10, &tagListener::callbackTagDetectInfo, this);
     rear_camera_tag_detect_info_sub = nh.subscribe(m_rear_camera_tag_detect_info_topic_name, 10, &tagListener::callbackRearCameraTagDetectInfo, this);
