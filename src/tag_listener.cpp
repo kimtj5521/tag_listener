@@ -9,6 +9,7 @@
 #include <apriltag_ros/AprilTagDetectionArray.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <std_msgs/Int8.h>
+#include <std_msgs/Int32.h>
 
 class tagListener
 {
@@ -38,6 +39,7 @@ public:
 
     double approach_dist_threshold;
     int approach_time;
+    // apriltag_ros::AprilTagDetectionArray temp_april_msg;
 
 private:
     ros::NodeHandle nh;
@@ -153,39 +155,39 @@ void tagListener::set_param()
 void tagListener::callbackTagDetectInfo(const apriltag_ros::AprilTagDetectionArray::ConstPtr &msg)
 {
     if(!msg->detections.empty()){
-        front_cam_big_tag_pose = msg->detections[0].pose;
-        front_cam_small_tag_pose = msg->detections[1].pose;
+        for (auto detection: msg->detections){
+            if (detection.id[0] == 0){
+                front_cam_big_tag_pose = detection.pose;;
+            }
+            if (detection.id[0] == 1){
+                front_cam_small_tag_pose = detection.pose;
+            }
+        }
     }
-    std::cout << "front cam" << std::endl;
-    std::cout << front_cam_big_tag_pose.pose.pose.position.x << std::endl;
-    std::cout << front_cam_small_tag_pose.pose.pose.position.x << std::endl;
+    // std::cout << "front cam" << std::endl;
+    // std::cout << front_cam_big_tag_pose.pose.pose.position.x << std::endl;
+    // std::cout << front_cam_small_tag_pose.pose.pose.position.x << std::endl;
 }
 
 void tagListener::callbackRearCameraTagDetectInfo(const apriltag_ros::AprilTagDetectionArray::ConstPtr &msg)
 {
     if(!msg->detections.empty()){
-        rear_cam_big_tag_pose = msg->detections[0].pose;
-        rear_cam_small_tag_pose = msg->detections[1].pose;
+        for (auto detection: msg->detections){
+            if (detection.id[0] == 0){
+                rear_cam_big_tag_pose = detection.pose;;
+            }
+            if (detection.id[0] == 1){
+                rear_cam_small_tag_pose = detection.pose;
+            }
+        }
     }
-    std::cout << "rear cam" << std::endl;
-    std::cout << rear_cam_big_tag_pose.pose.pose.position.x << std::endl;
-    std::cout << rear_cam_small_tag_pose.pose.pose.position.x << std::endl;
-
+    // std::cout << "rear cam" << std::endl;
+    // std::cout << rear_cam_big_tag_pose.pose.pose.position.x << std::endl;
+    // std::cout << rear_cam_small_tag_pose.pose.pose.position.x << std::endl;
 }
 
 void tagListener::run()
 {
-    // tf::StampedTransform transform;
-    // try{
-    //     listener.lookupTransform(camera_frame_id, tag_frame_id,
-    //                             ros::Time(0), transform);
-    // }
-    // catch(tf::TransformException ex){
-    //     ROS_ERROR("%s",ex.what());
-    //     // ros::Duration(1.0).sleep();
-    // }
-    // curr_x = transform.getOrigin().x();
-
     front_cam_big_tag_curr_x = front_cam_big_tag_pose.pose.pose.position.x;
     front_cam_small_tag_curr_x = front_cam_small_tag_pose.pose.pose.position.x;
 
@@ -215,8 +217,8 @@ void tagListener::run()
     if(front_cam_small_tag_curr_x != front_cam_small_tag_prev_x){
         b_front_small_tag_detecting_flag.data = true;
         m_front_small_tag_count++;
-        if(m_front_small_tag_count > 20){
-            m_front_small_tag_count = 20;
+        if(m_front_small_tag_count > 15){
+            m_front_small_tag_count = 15;
         }
         std::cout << "++front_small_tag_count: " << m_front_small_tag_count << std::endl;
     }
@@ -269,7 +271,7 @@ void tagListener::run()
     rear_small_tag_detecting_flag_pub.publish(b_rear_small_tag_detecting_flag);
 
     // mission number publish
-    if (m_front_big_tag_count >= approach_time && m_front_small_tag_count <(approach_time - 10)){
+    if (m_mission_num.data !=3 && m_front_big_tag_count >= approach_time && m_front_small_tag_count <(approach_time - 10)){
         m_mission_num.data = 1;
 
         first_goal_pose_msg.header.frame_id = map_frame_id;
@@ -310,7 +312,7 @@ void tagListener::run()
             m_mission_num.data = 2;
         }
     }
-    else if(m_rear_small_tag_count >= approach_time && m_rear_big_tag_count <approach_time){
+    else if(m_mission_num.data == 3 && m_rear_small_tag_count >= approach_time && m_rear_big_tag_count <approach_time){
         m_mission_num.data = 4;
 
         second_goal_pose_msg.header.frame_id = map_frame_id;
@@ -327,44 +329,28 @@ void tagListener::run()
 
         second_goal_pose_pub.publish(second_goal_pose_msg);
     }
-    else if(m_rear_big_tag_count >= approach_time){
+    else if(m_mission_num.data == 4 && m_rear_big_tag_count >= approach_time){
         m_mission_num.data = 5;
-        mission_count ++;
-        if(mission_count > approach_time){
-            mission_count = approach_time;
-        }
     }
 
     if( m_mission_num.data == 5){
+        mission_count ++;
+        // if(mission_count > approach_time){
+        //     mission_count = approach_time;
+        // }
         if(mission_count >= approach_time){
             m_mission_num.data = 0;
             mission_count = 0;
+
+            m_front_big_tag_count = 0;
+            m_front_small_tag_count = 0;
+            m_rear_big_tag_count = 0;
+            m_rear_small_tag_count = 0;
         }
     }
 
     mission_num_pub.publish(m_mission_num);
 
-    // if(b_big_tag_detecting_flag.data == true){
-
-    //     if( fixed_frame_flag == false){
-    //         first_goal_pose_msg.header.frame_id = map_frame_id;
-    //     }else{
-    //         first_goal_pose_msg.header.frame_id = camera_frame_id;
-    //     }
-    //     first_goal_pose_msg.header.stamp = ros::Time::now();
-
-    //     first_goal_pose_msg.pose.position.x = front_cam_big_tag_pose.pose.pose.position.x + offset_x;
-    //     first_goal_pose_msg.pose.position.y = front_cam_big_tag_pose.pose.pose.position.y + offset_y;
-    //     first_goal_pose_msg.pose.position.z = 0.0;
-
-    //     first_goal_pose_msg.pose.orientation.x = 0.0;
-    //     first_goal_pose_msg.pose.orientation.y = 0.0;
-    //     first_goal_pose_msg.pose.orientation.z = 0.0;
-    //     first_goal_pose_msg.pose.orientation.w = 1.0;
-
-
-    //     first_goal_pose_pub.publish(first_goal_pose_msg);
-    // }
 
     front_cam_big_tag_prev_x = front_cam_big_tag_curr_x;
     front_cam_small_tag_prev_x = front_cam_small_tag_curr_x;

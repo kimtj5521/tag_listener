@@ -22,5 +22,5 @@ tag_detect_info_topic_name: tag_detections
 rear_camera_tag_detect_info_topic_name: rear_/tag_detections
 
 # approach threshold
-approach_dist_threshold: 0.3 # meter
+approach_dist_threshold: 0.2 # meter
 approach_time: 25 # 2.5 sec
