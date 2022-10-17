@@ -4,8 +4,9 @@ Apriltag tf listener package
 
 Parameters:
 1. goal pose offset x & y
-2. tf frame_id setting
-3. goal pose frame id setting
+2. goal pose frame_id
+3. apriltag detection topic name
+4. small marker (tag #: 1) approach distance & time
 
 Pose direction.
 

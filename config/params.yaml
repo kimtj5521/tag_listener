@@ -7,15 +7,7 @@ rear_cam_small_tag_offset_x: 4.0
 rear_cam_small_tag_offset_y: 0.0
 
 # frame_id
-camera_frame: camera_link
-# camera_frame: base_link
-tag_frame: tag_0        # default: tag_ + id number / ex) tag id:0 => tag_0
-# tag_frame: tag_0_changed
-map_frame: base_link
-
-# goal_pose_frame id setting
-fixed_frame_flag: true   # true : camera_frame / false : map_frame
-# fixed_frame_flag: false 
+base_frame: base_link
 
 # tag_detectioin topic
 tag_detect_info_topic_name: tag_detections

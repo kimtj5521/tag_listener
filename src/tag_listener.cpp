@@ -27,10 +27,7 @@ public:
     double front_cam_small_tag_offset_y;
     double rear_cam_small_tag_offset_x;
     double rear_cam_small_tag_offset_y;
-    std::string camera_frame_id;
-    std::string tag_frame_id;
-    std::string map_frame_id;
-    bool fixed_frame_flag;
+    std::string base_frame_id;
 
     void callbackTagDetectInfo(const apriltag_ros::AprilTagDetectionArray::ConstPtr &msg);
     void callbackRearCameraTagDetectInfo(const apriltag_ros::AprilTagDetectionArray::ConstPtr &msg);
@@ -39,8 +36,7 @@ public:
 
     double approach_dist_threshold;
     int approach_time;
-    // apriltag_ros::AprilTagDetectionArray temp_april_msg;
-
+\
 private:
     ros::NodeHandle nh;
     ros::NodeHandle private_nh;
@@ -77,7 +73,7 @@ private:
     geometry_msgs::PoseWithCovarianceStamped rear_cam_big_tag_pose;
     geometry_msgs::PoseWithCovarianceStamped rear_cam_small_tag_pose;
 
-    std_msgs::Int8 m_mission_num;
+    std_msgs::Int32 m_mission_num;
 
     int m_front_big_tag_count;
     int m_front_small_tag_count;
@@ -119,7 +115,7 @@ tagListener::tagListener()
     rear_big_tag_detecting_flag_pub = nh.advertise<std_msgs::Bool>("/Docking/rear_big_tag_detecting_flag",1);
     rear_small_tag_detecting_flag_pub = nh.advertise<std_msgs::Bool>("/Docking/rear_small_tag_detecting_flag",1);
 
-    mission_num_pub = nh.advertise<std_msgs::Int8>("/Docking/mission_num",1);
+    mission_num_pub = nh.advertise<std_msgs::Int32>("/Docking/mission_num",1);
 
     tag_detect_info_sub = nh.subscribe(m_tag_detect_info_topic_name, 10, &tagListener::callbackTagDetectInfo, this);
     rear_camera_tag_detect_info_sub = nh.subscribe(m_rear_camera_tag_detect_info_topic_name, 10, &tagListener::callbackRearCameraTagDetectInfo, this);
@@ -140,11 +136,7 @@ void tagListener::set_param()
     nh.getParam("rear_cam_small_tag_offset_x", rear_cam_small_tag_offset_x);
     nh.getParam("rear_cam_small_tag_offset_y", rear_cam_small_tag_offset_y);
 
-    nh.param<std::string>("camera_frame", camera_frame_id, "camera_link");
-    nh.param<std::string>("tag_frame", tag_frame_id, "tag_0");
-    nh.param<std::string>("map_frame", map_frame_id, "map");
-    nh.param<bool>("fixed_frame_flag", fixed_frame_flag, false);
-
+    nh.param<std::string>("base_frame", base_frame_id, "base_link");
     nh.param<std::string>("tag_detect_info_topic_name", m_tag_detect_info_topic_name, "tag_detections");
     nh.param<std::string>("rear_camera_tag_detect_info_topic_name", m_rear_camera_tag_detect_info_topic_name, "rear_/tag_detections");
 
@@ -164,9 +156,6 @@ void tagListener::callbackTagDetectInfo(const apriltag_ros::AprilTagDetectionArr
             }
         }
     }
-    // std::cout << "front cam" << std::endl;
-    // std::cout << front_cam_big_tag_pose.pose.pose.position.x << std::endl;
-    // std::cout << front_cam_small_tag_pose.pose.pose.position.x << std::endl;
 }
 
 void tagListener::callbackRearCameraTagDetectInfo(const apriltag_ros::AprilTagDetectionArray::ConstPtr &msg)
@@ -181,9 +170,6 @@ void tagListener::callbackRearCameraTagDetectInfo(const apriltag_ros::AprilTagDe
             }
         }
     }
-    // std::cout << "rear cam" << std::endl;
-    // std::cout << rear_cam_big_tag_pose.pose.pose.position.x << std::endl;
-    // std::cout << rear_cam_small_tag_pose.pose.pose.position.x << std::endl;
 }
 
 void tagListener::run()
@@ -274,7 +260,7 @@ void tagListener::run()
     if (m_mission_num.data !=3 && m_front_big_tag_count >= approach_time && m_front_small_tag_count <(approach_time - 10)){
         m_mission_num.data = 1;
 
-        first_goal_pose_msg.header.frame_id = map_frame_id;
+        first_goal_pose_msg.header.frame_id = base_frame_id;
         first_goal_pose_msg.header.stamp = ros::Time::now();
 
         first_goal_pose_msg.pose.position.x = front_cam_big_tag_pose.pose.pose.position.x + front_cam_big_tag_offset_x;
@@ -289,7 +275,7 @@ void tagListener::run()
         first_goal_pose_pub.publish(first_goal_pose_msg);
     }
     else if(m_front_small_tag_count >= (approach_time - 10)){
-        second_goal_pose_msg.header.frame_id = map_frame_id;
+        second_goal_pose_msg.header.frame_id = base_frame_id;
         second_goal_pose_msg.header.stamp = ros::Time::now();
 
         second_goal_pose_msg.pose.position.x = front_cam_small_tag_pose.pose.pose.position.x + front_cam_small_tag_offset_x;
@@ -315,7 +301,7 @@ void tagListener::run()
     else if(m_mission_num.data == 3 && m_rear_small_tag_count >= approach_time && m_rear_big_tag_count <approach_time){
         m_mission_num.data = 4;
 
-        second_goal_pose_msg.header.frame_id = map_frame_id;
+        second_goal_pose_msg.header.frame_id = base_frame_id;
         second_goal_pose_msg.header.stamp = ros::Time::now();
 
         second_goal_pose_msg.pose.position.x = rear_cam_small_tag_pose.pose.pose.position.x + rear_cam_small_tag_offset_x;
@@ -335,9 +321,6 @@ void tagListener::run()
 
     if( m_mission_num.data == 5){
         mission_count ++;
-        // if(mission_count > approach_time){
-        //     mission_count = approach_time;
-        // }
         if(mission_count >= approach_time){
             m_mission_num.data = 0;
             mission_count = 0;
