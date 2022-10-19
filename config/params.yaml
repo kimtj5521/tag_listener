@@ -1,9 +1,9 @@
 # goal_pose_offset (unit: m)
-front_cam_big_tag_offset_x: 0.1
-front_cam_big_tag_offset_y: 0.5
+front_cam_big_tag_offset_x: 0.2
+front_cam_big_tag_offset_y: 1.0
 front_cam_small_tag_offset_x: 0.0
 front_cam_small_tag_offset_y: 0.0
-rear_cam_small_tag_offset_x: 4.0
+rear_cam_small_tag_offset_x: 2.0
 rear_cam_small_tag_offset_y: 0.0
 
 # frame_id
@@ -14,5 +14,14 @@ tag_detect_info_topic_name: tag_detections
 rear_camera_tag_detect_info_topic_name: rear_/tag_detections
 
 # approach threshold
-approach_dist_threshold: 0.2 # meter
+approach_dist_threshold: 0.3 # meter
 approach_time: 25 # 2.5 sec
+
+# camera tf (based on base_link)
+neubility_cam_tf_x: 0.325
+neubility_cam_tf_y: 0.1
+neubility_cam_tf_z: 0.655
+
+# align margin parameter
+heading_align_margin: 7.0  # degree
+translation_align_margin: 0.10 # meter
