@@ -41,6 +41,7 @@ public:
     std::string m_tag_detect_info_topic_name;
     std::string m_rear_camera_tag_detect_info_topic_name;
 
+    double approach_long_dist_threshold;
     double approach_dist_threshold;
     int approach_time;
 
@@ -118,6 +119,7 @@ private:
     int m_rear_small_tag_count;
 
     double small_tag_distance;
+    double big_tag_distance;
 
     geometry_msgs::TwistStamped  m_TagCommandMsg;
 
@@ -196,6 +198,7 @@ void tagListener::set_param()
     nh.param<std::string>("tag_detect_info_topic_name", m_tag_detect_info_topic_name, "tag_detections");
     nh.param<std::string>("rear_camera_tag_detect_info_topic_name", m_rear_camera_tag_detect_info_topic_name, "rear_/tag_detections");
 
+    nh.getParam("approach_long_dist_threshold", approach_long_dist_threshold);
     nh.getParam("approach_dist_threshold", approach_dist_threshold);
     nh.getParam("approach_time", approach_time);
 
@@ -242,7 +245,7 @@ void tagListener::callbackRearCameraTagDetectInfo(const apriltag_ros::AprilTagDe
 
 void tagListener::callbackIsCoverClosed(const std_msgs::Bool::ConstPtr &msg)
 {
-    b_is_cover_closed_flag = true;
+    b_is_cover_closed_flag = msg->data;
 }
 
 void tagListener::callbackLocalizationInit(const std_msgs::Bool::ConstPtr &msg)
@@ -289,8 +292,11 @@ void tagListener::pub_leave_goal_pose(geometry_msgs::PoseWithCovarianceStamped t
     goal_pose_msg.header.frame_id = base_frame_id;
     goal_pose_msg.header.stamp = ros::Time::now();
 
-    goal_pose_msg.pose.position.x = -neubility_cam_tf_x - tag_pose.pose.pose.position.z + rear_cam_small_tag_offset_x;
-    goal_pose_msg.pose.position.y = -neubility_cam_tf_y + tag_pose.pose.pose.position.x + rear_cam_small_tag_offset_y;
+    // goal_pose_msg.pose.position.x = -neubility_cam_tf_x - tag_pose.pose.pose.position.z + rear_cam_small_tag_offset_x;
+    // goal_pose_msg.pose.position.y = -neubility_cam_tf_y + tag_pose.pose.pose.position.x + rear_cam_small_tag_offset_y;
+
+    goal_pose_msg.pose.position.x = rear_cam_small_tag_offset_x;
+    goal_pose_msg.pose.position.y = rear_cam_small_tag_offset_y;
     goal_pose_msg.pose.position.z = 0.0;
 
     // goal_pose_msg.pose.orientation.x = 0.0;
@@ -440,20 +446,30 @@ void tagListener::run()
     // mission number publish
     // ( approach tag )
     if (m_mission_num.data == 0 || m_mission_num.data == 1 || m_mission_num.data == 2){
-        if(m_front_big_tag_count >= approach_time && m_front_small_tag_count < (approach_time -10)){
-            m_mission_num.data = 1;
-        }
-        if(m_front_small_tag_count >= (approach_time-10)){
-            small_tag_distance = sqrt(pow(front_cam_small_tag_pose.pose.pose.position.z, 2)
-                                     + pow(front_cam_small_tag_pose.pose.pose.position.x, 2));
+        big_tag_distance = sqrt(pow(front_cam_big_tag_pose.pose.pose.position.z, 2)
+                                     + pow(front_cam_big_tag_pose.pose.pose.position.x, 2));
 
-            if(small_tag_distance < approach_dist_threshold){
-                m_mission_num.data = 3;
+        if (big_tag_distance < approach_long_dist_threshold) {
+            if(m_front_big_tag_count >= approach_time && m_front_small_tag_count < (approach_time -10)){
+                m_mission_num.data = 1;
             }
-            else{
-                m_mission_num.data = 2;
-            }
+            if(m_front_small_tag_count >= (approach_time-10)){
+                small_tag_distance = sqrt(pow(front_cam_small_tag_pose.pose.pose.position.z, 2)
+                                        + pow(front_cam_small_tag_pose.pose.pose.position.x, 2));
+
+                if(small_tag_distance < approach_dist_threshold){
+                    m_mission_num.data = 3;
+                }
+                else{
+                    m_mission_num.data = 2;
+                }
+            }            
         }
+        else {
+            m_mission_num.data = 0;
+        }
+
+
     }
 
     // ( stop )
@@ -482,9 +498,9 @@ void tagListener::run()
             
             translation_error = fabs(rear_cam_small_tag_pose.pose.pose.position.x);
             heading_error = fabs(pitch * 180.0 / M_PI);
-            std::cout << "t_error : " << translation_error << std::endl;
-            std::cout << "h_error : " << heading_error << std::endl;
-            std::cout << "---------------------" << std::endl;
+            // std::cout << "t_error : " << translation_error << std::endl;
+            // std::cout << "h_error : " << heading_error << std::endl;
+            // std::cout << "---------------------" << std::endl;
         }
 
         if ( translation_error <= translation_align_margin){
